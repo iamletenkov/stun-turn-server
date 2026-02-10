@@ -1,0 +1,40 @@
+version: "3.8"
+
+services:
+  coturn:
+    image: coturn/coturn:latest
+    container_name: coturn
+    restart: unless-stopped
+
+    # Map standard STUN/TURN ports
+    ports:
+      - "3478:3478/udp"   # STUN/TURN (UDP)
+      - "3478:3478/tcp"   # STUN/TURN (TCP)
+      - "5349:5349/udp"   # STUN/TURN over TLS (optional)
+      - "5349:5349/tcp"   # STUN/TURN over TLS (optional)
+      # Relay ports range (optional but recommended for TURN)
+      - "49160-49200:49160-49200/udp"
+
+    environment:
+      # Public IP of this server for TURN relaying.
+      # Set via environment or .env file.
+      - EXTERNAL_IP=${EXTERNAL_IP}
+
+      # Basic auth settings for TURN.
+      - TURN_REALM=${TURN_REALM}
+      - TURN_USER=${TURN_USER}
+      - TURN_PASSWORD=${TURN_PASSWORD}
+
+    command: >
+      turnserver
+      --external-ip=${EXTERNAL_IP}
+      --listening-port=3478
+      --tls-listening-port=5349
+      --min-port=49160
+      --max-port=49200
+      --fingerprint
+      --lt-cred-mech
+      --realm=${TURN_REALM}
+      --user=${TURN_USER}:${TURN_PASSWORD}
+      --no-cli
+
